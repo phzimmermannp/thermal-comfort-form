@@ -137,7 +137,6 @@
 
     .field input[type="text"]:focus { border-color: var(--accent); }
 
-    /* Context grid */
     .top-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -229,7 +228,6 @@
     .pos-icon  { font-size: 18px; line-height: 1; }
     .pos-label { font-size: 11px; color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace; line-height: 1.3; }
 
-    /* Cards */
     .body-part-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -275,8 +273,6 @@
       min-height: 18px;
     }
 
-    .m-value.untouched { color: var(--text-hint); }
-
     input[type="range"] {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 4px;
@@ -293,21 +289,11 @@
       box-shadow: 0 0 0 1px var(--accent);
     }
 
-    input[type="range"].untouched::-webkit-slider-thumb {
-      background: var(--text-hint);
-      box-shadow: 0 0 0 1px var(--text-hint);
-    }
-
     input[type="range"]::-moz-range-thumb {
       width: 16px; height: 16px; border-radius: 50%;
       background: var(--accent); cursor: pointer;
       border: 2px solid var(--surface);
       box-shadow: 0 0 0 1px var(--accent);
-    }
-
-    input[type="range"].untouched::-moz-range-thumb {
-      background: var(--text-hint);
-      box-shadow: 0 0 0 1px var(--text-hint);
     }
 
     .scale-ends {
@@ -375,12 +361,11 @@
         <input type="text" id="pid" placeholder="e.g. P001" />
       </div>
       <div class="field">
-        <label>Season / Condition</label>
+        <label>Session / Condition</label>
         <input type="text" id="session" placeholder="e.g. baseline" />
       </div>
     </div>
 
-    <!-- Context -->
     <p class="section-title">Context</p>
     <div class="top-grid">
 
@@ -453,7 +438,6 @@
 
     </div>
 
-    <!-- Initial State -->
     <p class="section-title">Initial state</p>
     <div class="body-part-card initial-card">
       <div class="card-header">
@@ -463,29 +447,28 @@
       <div class="metrics-grid">
         <div class="metric-block">
           <span class="m-label">Thermal sensation</span>
-          <span class="m-value untouched" id="initial_sens_lbl">—</span>
-          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_sens" class="untouched"
-            oninput="handleSlider('initial_sens', sensText)" />
+          <span class="m-value" id="initial_sens_lbl">Neutral (0)</span>
+          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_sens"
+            oninput="updateLabel('initial_sens', sensText)" />
           <div class="scale-ends"><span>−3</span><span>+3</span></div>
         </div>
         <div class="metric-block">
           <span class="m-label">Thermal comfort</span>
-          <span class="m-value untouched" id="initial_comf_lbl">—</span>
-          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_comf" class="untouched"
-            oninput="handleSlider('initial_comf', comfText)" />
+          <span class="m-value" id="initial_comf_lbl">- (0)</span>
+          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_comf"
+            oninput="updateLabel('initial_comf', comfText)" />
           <div class="scale-ends"><span>−3</span><span>+3</span></div>
         </div>
         <div class="metric-block">
           <span class="m-label">Wanted action</span>
-          <span class="m-value untouched" id="initial_act_lbl">—</span>
-          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_act" class="untouched"
-            oninput="handleSlider('initial_act', actText)" />
+          <span class="m-value" id="initial_act_lbl">No change (0)</span>
+          <input type="range" min="-3" max="3" value="0" step="0.5" id="initial_act"
+            oninput="updateLabel('initial_act', actText)" />
           <div class="scale-ends"><span>−3</span><span>+3</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Body regions -->
     <p class="section-title">Body regions</p>
     <div id="parts-container"></div>
 
@@ -513,51 +496,37 @@
 
     const tagLabel = { back: "posterior", front: "anterior", head: "head", limbs: "limbs" };
 
-    // For decimal values: integer labels at exact integers, show numeric value for decimals
     const sensIntLabels = ["Cold","Cool","Slightly cool","Neutral","Slightly warm","Warm","Hot"];
     const comfIntLabels = ["Very uncomf.","Uncomfortable","Slightly uncomf.","-","Slightly comf.","Comfortable","Very comf."];
     const actIntLabels  = ["Much cooler","Cooler","Slightly cooler","No change","Slightly warmer","Warmer","Much warmer"];
 
-    function formatVal(v) {
-      const n = parseFloat(v);
+    function formatVal(n) {
       return n % 1 === 0 ? (n > 0 ? "+" + n : String(n)) : (n > 0 ? "+" + n.toFixed(1) : n.toFixed(1));
     }
 
     function sensText(v) {
       const n = parseFloat(v);
-      if (n % 1 === 0) return sensIntLabels[n + 3] + " (" + formatVal(n) + ")";
-      return formatVal(n);
+      return n % 1 === 0 ? sensIntLabels[n + 3] + " (" + formatVal(n) + ")" : formatVal(n);
     }
 
     function comfText(v) {
       const n = parseFloat(v);
-      if (n % 1 === 0) return comfIntLabels[n + 3] + " (" + formatVal(n) + ")";
-      return formatVal(n);
+      return n % 1 === 0 ? comfIntLabels[n + 3] + " (" + formatVal(n) + ")" : formatVal(n);
     }
 
     function actText(v) {
       const n = parseFloat(v);
-      if (n % 1 === 0) return actIntLabels[n + 3] + " (" + formatVal(n) + ")";
-      return formatVal(n);
+      return n % 1 === 0 ? actIntLabels[n + 3] + " (" + formatVal(n) + ")" : formatVal(n);
     }
 
-    function handleSlider(id, textFn) {
+    function updateLabel(id, textFn) {
       const slider = document.getElementById(id);
-      const lbl    = document.getElementById(id + "_lbl");
-      slider.classList.remove("untouched");
-      lbl.classList.remove("untouched");
-      lbl.textContent = textFn(slider.value);
+      document.getElementById(id + "_lbl").textContent = textFn(slider.value);
     }
 
     function selectPos(el) {
       document.querySelectorAll(".pos-option").forEach(o => o.classList.remove("selected"));
       el.classList.add("selected");
-    }
-
-    function getVal(id) {
-      const lbl = document.getElementById(id + "_lbl");
-      if (!lbl || lbl.classList.contains("untouched")) return null;
-      return parseFloat(document.getElementById(id).value);
     }
 
     function getClothing() {
@@ -583,23 +552,23 @@
         <div class="metrics-grid">
           <div class="metric-block">
             <span class="m-label">Thermal sensation</span>
-            <span class="m-value untouched" id="${part.id}_sens_lbl">—</span>
-            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_sens" class="untouched"
-              oninput="handleSlider('${part.id}_sens', sensText)" />
+            <span class="m-value" id="${part.id}_sens_lbl">Neutral (0)</span>
+            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_sens"
+              oninput="updateLabel('${part.id}_sens', sensText)" />
             <div class="scale-ends"><span>−3</span><span>+3</span></div>
           </div>
           <div class="metric-block">
             <span class="m-label">Thermal comfort</span>
-            <span class="m-value untouched" id="${part.id}_comf_lbl">—</span>
-            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_comf" class="untouched"
-              oninput="handleSlider('${part.id}_comf', comfText)" />
+            <span class="m-value" id="${part.id}_comf_lbl">- (0)</span>
+            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_comf"
+              oninput="updateLabel('${part.id}_comf', comfText)" />
             <div class="scale-ends"><span>−3</span><span>+3</span></div>
           </div>
           <div class="metric-block">
             <span class="m-label">Wanted action</span>
-            <span class="m-value untouched" id="${part.id}_act_lbl">—</span>
-            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_act" class="untouched"
-              oninput="handleSlider('${part.id}_act', actText)" />
+            <span class="m-value" id="${part.id}_act_lbl">No change (0)</span>
+            <input type="range" min="-3" max="3" value="0" step="0.5" id="${part.id}_act"
+              oninput="updateLabel('${part.id}_act', actText)" />
             <div class="scale-ends"><span>−3</span><span>+3</span></div>
           </div>
         </div>
@@ -620,16 +589,16 @@
         {
           timestamp: ts, participant_id: pid, session, clothing, position,
           body_part: "Whole body (initial)",
-          thermal_sensation: getVal("initial_sens"),
-          thermal_comfort:   getVal("initial_comf"),
-          wanted_action:     getVal("initial_act")
+          thermal_sensation: parseFloat(document.getElementById("initial_sens").value),
+          thermal_comfort:   parseFloat(document.getElementById("initial_comf").value),
+          wanted_action:     parseFloat(document.getElementById("initial_act").value)
         },
         ...bodyParts.map(part => ({
           timestamp: ts, participant_id: pid, session, clothing, position,
           body_part: part.label,
-          thermal_sensation: getVal(part.id + "_sens"),
-          thermal_comfort:   getVal(part.id + "_comf"),
-          wanted_action:     getVal(part.id + "_act")
+          thermal_sensation: parseFloat(document.getElementById(part.id + "_sens").value),
+          thermal_comfort:   parseFloat(document.getElementById(part.id + "_comf").value),
+          wanted_action:     parseFloat(document.getElementById(part.id + "_act").value)
         }))
       ];
 
@@ -649,19 +618,15 @@
         toast.textContent = "Submitted successfully — data sent to Google Sheets.";
         btn.textContent   = "Submit again";
 
-        // Reset all
+        // Reset all sliders to 0 with labels
         const allIds = ["initial", ...bodyParts.map(p => p.id)];
         allIds.forEach(id => {
-          ["sens","comf","act"].forEach(m => {
-            const slider = document.getElementById(`${id}_${m}`);
-            const lbl    = document.getElementById(`${id}_${m}_lbl`);
-            if (slider && lbl) {
-              slider.value = 0;
-              slider.classList.add("untouched");
-              lbl.classList.add("untouched");
-              lbl.textContent = "—";
-            }
-          });
+          const s = document.getElementById(id + "_sens");
+          const c = document.getElementById(id + "_comf");
+          const a = document.getElementById(id + "_act");
+          s.value = 0; document.getElementById(id + "_sens_lbl").textContent = "Neutral (0)";
+          c.value = 0; document.getElementById(id + "_comf_lbl").textContent = "- (0)";
+          a.value = 0; document.getElementById(id + "_act_lbl").textContent  = "No change (0)";
         });
 
         document.querySelectorAll('input[name="clothing"], input[name="position"]').forEach(r => r.checked = false);
