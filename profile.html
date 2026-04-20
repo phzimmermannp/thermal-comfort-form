@@ -327,39 +327,46 @@
       return id;
     }
 
-    async function lookupProfile() {
+    function jsonpLookup(email, callback) {
+      const cbName = "jsonp_" + Date.now();
+      const script = document.createElement("script");
+      window[cbName] = function(data) {
+        delete window[cbName];
+        document.body.removeChild(script);
+        callback(null, data);
+      };
+      script.onerror = function() {
+        delete window[cbName];
+        document.body.removeChild(script);
+        callback(new Error("Connection error"));
+      };
+      script.src = SHEET_URL + "?email=" + encodeURIComponent(email) + "&callback=" + cbName;
+      document.body.appendChild(script);
+    }
+
+    function lookupProfile() {
       const email = document.getElementById("lookup-email").value.trim();
       const toast = document.getElementById("lookup-toast");
       const btn   = document.getElementById("lookup-btn");
 
-      if (!email) {
-        toast.className = "toast error";
-        toast.textContent = "Please enter your email.";
-        return;
-      }
+      if (!email) { toast.className = "toast error"; toast.textContent = "Please enter your email."; return; }
 
-      btn.disabled = true;
-      btn.textContent = "Looking up…";
+      btn.disabled = true; btn.textContent = "Looking up…";
       toast.className = "toast";
 
-      try {
-        const res = await fetch(SHEET_URL + "?email=" + encodeURIComponent(email));
-        const data = await res.json();
-
-        if (data.found) {
+      jsonpLookup(email, function(err, data) {
+        if (err) {
+          toast.className = "toast error";
+          toast.textContent = "Error connecting to the server. Please try again.";
+        } else if (data.found) {
           toast.className = "toast success";
           toast.textContent = "Profile found! Your Participant ID is: " + data.participant_id;
         } else {
           toast.className = "toast error";
           toast.textContent = "No profile found for this email. Please create one below.";
         }
-      } catch (err) {
-        toast.className = "toast error";
-        toast.textContent = "Error connecting to the server. Please try again.";
-      }
-
-      btn.disabled = false;
-      btn.textContent = "Look up";
+        btn.disabled = false; btn.textContent = "Look up";
+      });
     }
 
     async function createProfile() {
@@ -385,54 +392,48 @@
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = "Creating…";
+      btn.disabled = true; btn.textContent = "Creating…";
       toast.className = "toast";
 
-      // Check if email already exists
-      try {
-        const check = await fetch(SHEET_URL + "?email=" + encodeURIComponent(email));
-        const existing = await check.json();
-        if (existing.found) {
+      // Check if email already exists via JSONP
+      jsonpLookup(email, async function(err, existing) {
+        if (!err && existing.found) {
           toast.className = "toast info";
           toast.textContent = "A profile with this email already exists. Your ID is: " + existing.participant_id;
           document.getElementById("id-display").textContent = existing.participant_id;
           document.getElementById("id-badge").classList.add("visible");
-          btn.disabled = false;
-          btn.textContent = "Create profile";
+          btn.disabled = false; btn.textContent = "Create profile";
           return;
         }
-      } catch (e) {}
 
-      const participant_id = generateID();
-      const created_at     = new Date().toISOString();
+        const participant_id = generateID();
+        const created_at     = new Date().toISOString();
 
-      try {
-        await fetch(SHEET_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "profile",
-            participant_id, email, age, gender,
-            height_cm: height, weight_kg: weight,
-            nationality, cold_heat_sensitivity: sensitivity,
-            created_at
-          })
-        });
+        try {
+          await fetch(SHEET_URL, {
+            method: "POST", mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "profile",
+              participant_id, email, age, gender,
+              height_cm: height, weight_kg: weight,
+              nationality, cold_heat_sensitivity: sensitivity,
+              created_at
+            })
+          });
 
-        toast.className = "toast success";
-        toast.textContent = "Profile created successfully!";
-        document.getElementById("id-display").textContent = participant_id;
-        document.getElementById("id-badge").classList.add("visible");
+          toast.className = "toast success";
+          toast.textContent = "Profile created successfully!";
+          document.getElementById("id-display").textContent = participant_id;
+          document.getElementById("id-badge").classList.add("visible");
 
-      } catch (err) {
-        toast.className = "toast error";
-        toast.textContent = "Error saving profile. Please try again.";
-      }
+        } catch (e) {
+          toast.className = "toast error";
+          toast.textContent = "Error saving profile. Please try again.";
+        }
 
-      btn.disabled = false;
-      btn.textContent = "Create profile";
+        btn.disabled = false; btn.textContent = "Create profile";
+      });
     }
   </script>
 </body>
