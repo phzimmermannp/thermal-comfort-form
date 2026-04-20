@@ -245,6 +245,34 @@
     <p class="section-title">Body regions</p>
     <div id="parts-container"></div>
 
+    <p class="section-title">Overall</p>
+    <div class="body-part-card initial-card">
+      <div class="card-header">
+        <span class="part-title">Whole body</span>
+        <span class="section-tag tag-initial">overall</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-block">
+          <span class="m-label">Thermal sensation</span>
+          <span class="m-value" id="overall_sens_lbl">Neutral (0)</span>
+          <input type="range" min="-3" max="3" value="0" step="0.5" id="overall_sens" oninput="updateLabel('overall_sens', sensText)" />
+          <div class="scale-ends"><span>−3</span><span>+3</span></div>
+        </div>
+        <div class="metric-block">
+          <span class="m-label">Thermal comfort</span>
+          <span class="m-value" id="overall_comf_lbl">Comfortable (+2)</span>
+          <input type="range" min="-3" max="3" value="2" step="0.5" id="overall_comf" oninput="updateLabel('overall_comf', comfText)" />
+          <div class="scale-ends"><span>−3</span><span>+3</span></div>
+        </div>
+        <div class="metric-block">
+          <span class="m-label">Wanted action</span>
+          <span class="m-value" id="overall_act_lbl">No change (0)</span>
+          <input type="range" min="-3" max="3" value="0" step="0.5" id="overall_act" oninput="updateLabel('overall_act', actText)" />
+          <div class="scale-ends"><span>−3</span><span>+3</span></div>
+        </div>
+      </div>
+    </div>
+
     <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
     <div class="toast" id="toast"></div>
 
@@ -393,7 +421,14 @@
           thermal_sensation: parseFloat(document.getElementById(part.id + "_sens").value),
           thermal_comfort:   parseFloat(document.getElementById(part.id + "_comf").value),
           wanted_action:     parseFloat(document.getElementById(part.id + "_act").value)
-        }))
+        })),
+        {
+          timestamp: ts, participant_id: pid, season: session, clothing, position, coming_from: comingFrom,
+          body_part: "Whole body (overall)",
+          thermal_sensation: parseFloat(document.getElementById("overall_sens").value),
+          thermal_comfort:   parseFloat(document.getElementById("overall_comf").value),
+          wanted_action:     parseFloat(document.getElementById("overall_act").value)
+        }
       ];
 
       btn.disabled = true; btn.textContent = "Sending…";
@@ -421,6 +456,11 @@
           document.getElementById(p.id + "_comf").value = 2; document.getElementById(p.id + "_comf_lbl").textContent = "Comfortable (+2)";
           document.getElementById(p.id + "_act").value  = 0; document.getElementById(p.id + "_act_lbl").textContent  = "No change (0)";
         });
+
+        // Reset overall to 0 / +2
+        document.getElementById("overall_sens").value = 0; document.getElementById("overall_sens_lbl").textContent = "Neutral (0)";
+        document.getElementById("overall_comf").value = 2; document.getElementById("overall_comf_lbl").textContent = "Comfortable (+2)";
+        document.getElementById("overall_act").value  = 0; document.getElementById("overall_act_lbl").textContent  = "No change (0)";
 
         document.querySelectorAll('input[name="clothing"], input[name="position"], input[name="coming_from"]').forEach(r => r.checked = false);
         document.querySelectorAll(".pos-option").forEach(o => o.classList.remove("selected"));
