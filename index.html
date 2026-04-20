@@ -461,7 +461,7 @@
       el.classList.add("selected");
     }
 
-    async function lookupByEmail() {
+    function lookupByEmail() {
       const email = document.getElementById("email").value.trim();
       const msg   = document.getElementById("pid-msg");
       const btn   = document.getElementById("lookup-btn");
@@ -471,24 +471,33 @@
       btn.disabled = true; btn.textContent = "Loading…";
       msg.className = "pid-found";
 
-      try {
-        const res  = await fetch(SHEET_URL + "?email=" + encodeURIComponent(email));
-        const data = await res.json();
+      const cbName = "jsonp_" + Date.now();
+      const script = document.createElement("script");
 
+      window[cbName] = function(data) {
+        delete window[cbName];
+        document.body.removeChild(script);
         if (data.found) {
           document.getElementById("pid").value = data.participant_id;
           msg.className = "pid-found success";
           msg.textContent = "Profile found — ID loaded: " + data.participant_id;
         } else {
           msg.className = "pid-found error";
-          msg.textContent = "No profile found. Create one at profile.html first.";
+          msg.textContent = "No profile found. Create one using the link below.";
         }
-      } catch (err) {
+        btn.disabled = false; btn.textContent = "Load ID";
+      };
+
+      script.onerror = function() {
+        delete window[cbName];
+        document.body.removeChild(script);
         msg.className = "pid-found error";
         msg.textContent = "Connection error. You can type your ID manually.";
-      }
+        btn.disabled = false; btn.textContent = "Load ID";
+      };
 
-      btn.disabled = false; btn.textContent = "Load ID";
+      script.src = SHEET_URL + "?email=" + encodeURIComponent(email) + "&callback=" + cbName;
+      document.body.appendChild(script);
     }
 
     // Build body region cards
