@@ -197,25 +197,6 @@
       </div>
     </div>
 
-    <!-- START SESSION -->
-    <p class="section-title">Session</p>
-    <div class="session-banner" id="session-banner">
-      <div class="session-left">
-        <span class="session-icon">⏱</span>
-        <div>
-          <div class="session-label">Session not started</div>
-          <div class="session-time" id="session-time-display">Press the button when you start the car</div>
-        </div>
-      </div>
-      <div class="session-right">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" id="offset-sec" value="0" min="-300" max="300" style="width:64px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:13px;font-family:'IBM Plex Mono',monospace;background:var(--surface);color:var(--text-primary);outline:none;text-align:center;" title="Offset in seconds (+ if button pressed after ignition, - if before)" />
-          <span style="font-size:11px;color:var(--text-hint);font-family:'IBM Plex Mono',monospace;">sec offset</span>
-        </div>
-        <button class="btn-start" id="start-btn" onclick="startSession()">Start session</button>
-      </div>
-    </div>
-
     <p class="section-title">Context</p>
     <div class="top-grid">
 
@@ -255,6 +236,25 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- START SESSION -->
+    <p class="section-title">Session</p>
+    <div class="session-banner" id="session-banner">
+      <div class="session-left">
+        <span class="session-icon">⏱</span>
+        <div>
+          <div class="session-label">Session not started</div>
+          <div class="session-time" id="session-time-display">Press the button when you start the car</div>
+        </div>
+      </div>
+      <div class="session-right">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" id="offset-sec" value="0" min="-300" max="300" style="width:64px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:13px;font-family:'IBM Plex Mono',monospace;background:var(--surface);color:var(--text-primary);outline:none;text-align:center;" title="Offset in seconds (+ if button pressed after ignition, - if before)" />
+          <span style="font-size:11px;color:var(--text-hint);font-family:'IBM Plex Mono',monospace;">sec offset</span>
+        </div>
+        <button class="btn-start" id="start-btn" onclick="startSession()">Start session</button>
+      </div>
     </div>
 
     <p class="section-title">Initial state</p>
