@@ -144,6 +144,16 @@
     .btn-submit:active { transform: scale(0.99); }
     .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    .btn-new-response {
+      width: 100%; margin-top: 8px; padding: 13px;
+      background: var(--surface); color: var(--text-primary);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px; font-weight: 500; letter-spacing: 0.04em;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-new-response:hover { background: var(--bg); }
+
     .toast { display: none; margin-top: 12px; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; text-align: center; font-family: 'IBM Plex Mono', monospace; }
     .toast.success { display: block; background: var(--success-bg); color: var(--success-fg); }
     .toast.error   { display: block; background: var(--error-bg);   color: var(--error-fg); }
@@ -317,6 +327,7 @@
     </div>
 
     <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
+    <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()" style="display:none;">New response — same session</button>
     <div class="toast" id="toast"></div>
 
   </div>
@@ -371,6 +382,32 @@
 
       const fmt = ignitionTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       display.textContent = "Started at " + fmt + (offset !== 0 ? " (offset: " + (offset > 0 ? "+" : "") + offset + "s)" : "");
+    }
+
+    function newResponse() {
+      // Reset only sliders — keep participant, session, context and ignition_time
+
+      // Reset initial state to 0
+      document.getElementById("initial_sens").value = 0; document.getElementById("initial_sens_lbl").textContent = "Neutral (0)";
+      document.getElementById("initial_comf").value = 0; document.getElementById("initial_comf_lbl").textContent = "- (0)";
+      document.getElementById("initial_act").value  = 0; document.getElementById("initial_act_lbl").textContent  = "No change (0)";
+
+      // Reset body parts — comfort back to +2
+      bodyParts.forEach(p => {
+        document.getElementById(p.id + "_sens").value = 0; document.getElementById(p.id + "_sens_lbl").textContent = "Neutral (0)";
+        document.getElementById(p.id + "_comf").value = 2; document.getElementById(p.id + "_comf_lbl").textContent = "Comfortable (+2)";
+        document.getElementById(p.id + "_act").value  = 0; document.getElementById(p.id + "_act_lbl").textContent  = "No change (0)";
+      });
+
+      // Reset overall
+      document.getElementById("overall_sens").value = 0; document.getElementById("overall_sens_lbl").textContent = "Neutral (0)";
+      document.getElementById("overall_comf").value = 2; document.getElementById("overall_comf_lbl").textContent = "Comfortable (+2)";
+      document.getElementById("overall_act").value  = 0; document.getElementById("overall_act_lbl").textContent  = "No change (0)";
+
+      // Hide new response button and toast, scroll to top
+      document.getElementById("newResponseBtn").style.display = "none";
+      document.getElementById("toast").className = "toast";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function toggleOther(show) {
@@ -509,17 +546,13 @@
         });
 
         toast.className   = "toast success";
-        toast.textContent = "Submitted successfully — data sent to Google Sheets.";
+        toast.textContent = "Submitted! Press 'New response' to fill again with the same session context.";
         btn.textContent   = "Submit";
 
-        // Reset session banner
-        ignitionTime = null;
-        document.getElementById("session-banner").classList.remove("active");
-        document.getElementById("start-btn").classList.remove("started");
-        document.getElementById("start-btn").textContent = "Start session";
-        document.getElementById("session-time-display").textContent = "Press the button when you start the car";
-        document.getElementById("offset-sec").value = 0;
+        // Show new response button
+        document.getElementById("newResponseBtn").style.display = "block";
 
+        // Reset only sliders — keep participant, context and ignition_time
         // Reset initial state to 0
         document.getElementById("initial_sens").value = 0; document.getElementById("initial_sens_lbl").textContent = "Neutral (0)";
         document.getElementById("initial_comf").value = 0; document.getElementById("initial_comf_lbl").textContent = "- (0)";
@@ -532,19 +565,10 @@
           document.getElementById(p.id + "_act").value  = 0; document.getElementById(p.id + "_act_lbl").textContent  = "No change (0)";
         });
 
-        // Reset overall to 0 / +2
+        // Reset overall
         document.getElementById("overall_sens").value = 0; document.getElementById("overall_sens_lbl").textContent = "Neutral (0)";
         document.getElementById("overall_comf").value = 2; document.getElementById("overall_comf_lbl").textContent = "Comfortable (+2)";
         document.getElementById("overall_act").value  = 0; document.getElementById("overall_act_lbl").textContent  = "No change (0)";
-
-        document.querySelectorAll('input[name="clothing"], input[name="position"], input[name="coming_from"]').forEach(r => r.checked = false);
-        document.querySelectorAll(".pos-option").forEach(o => o.classList.remove("selected"));
-        document.getElementById("coming-from-other").style.display = "none";
-        document.getElementById("coming-from-other").value = "";
-        document.getElementById("pid").value     = "";
-        document.getElementById("session").value = "";
-        document.getElementById("email").value   = "";
-        document.getElementById("pid-msg").className = "pid-found";
 
       } catch (err) {
         toast.className   = "toast error";
