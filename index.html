@@ -326,14 +326,12 @@
       </div>
     </div>
 
+    <label style="display:flex;align-items:center;gap:8px;margin-top:1.5rem;font-size:13px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;cursor:pointer;">
+      <input type="checkbox" id="prefill-checkbox" style="width:15px;height:15px;cursor:pointer;" />
+      Pre-fill next response with current values
+    </label>
     <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
-    <div id="post-submit-options" style="display:none;">
-      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;cursor:pointer;">
-        <input type="checkbox" id="prefill-checkbox" style="width:15px;height:15px;cursor:pointer;" />
-        Pre-fill next response with current values
-      </label>
-      <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()">New response — same session</button>
-    </div>
+    <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()" style="display:none;">New response — same session</button>
     <div class="toast" id="toast"></div>
 
   </div>
@@ -404,7 +402,7 @@
         document.getElementById(id + "_act").value  = vals.act;  updateLabel(id + "_act",  actText);
       });
 
-      document.getElementById("post-submit-options").style.display = "none";
+      document.getElementById("newResponseBtn").style.display = "none";
       document.getElementById("prefill-checkbox").checked = false;
       document.getElementById("toast").className = "toast";
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -550,7 +548,7 @@
         btn.textContent   = "Submit";
 
         // Show post-submit options (checkbox + new response button)
-        document.getElementById("post-submit-options").style.display = "block";
+        document.getElementById("newResponseBtn").style.display = "block";
 
         // Save current slider values for prefill before resetting
         lastValues = {};
