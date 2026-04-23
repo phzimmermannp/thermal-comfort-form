@@ -327,7 +327,13 @@
     </div>
 
     <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
-    <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()" style="display:none;">New response — same session</button>
+    <div id="post-submit-options" style="display:none;">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;cursor:pointer;">
+        <input type="checkbox" id="prefill-checkbox" style="width:15px;height:15px;cursor:pointer;" />
+        Pre-fill next response with current values
+      </label>
+      <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()">New response — same session</button>
+    </div>
     <div class="toast" id="toast"></div>
 
   </div>
@@ -366,6 +372,7 @@
     }
 
     let ignitionTime = null;
+    let lastValues   = {};
 
     function startSession() {
       const offset  = parseInt(document.getElementById("offset-sec").value) || 0;
@@ -385,27 +392,20 @@
     }
 
     function newResponse() {
-      // Reset only sliders — keep participant, session, context and ignition_time
+      const prefill = document.getElementById("prefill-checkbox").checked;
 
-      // Reset initial state to 0
-      document.getElementById("initial_sens").value = 0; document.getElementById("initial_sens_lbl").textContent = "Neutral (0)";
-      document.getElementById("initial_comf").value = 0; document.getElementById("initial_comf_lbl").textContent = "- (0)";
-      document.getElementById("initial_act").value  = 0; document.getElementById("initial_act_lbl").textContent  = "No change (0)";
+      const defaults = { initial: { sens: 0, comf: 0, act: 0 }, overall: { sens: 0, comf: 2, act: 0 } };
+      bodyParts.forEach(p => { defaults[p.id] = { sens: 0, comf: 2, act: 0 }; });
 
-      // Reset body parts — comfort back to +2
-      bodyParts.forEach(p => {
-        document.getElementById(p.id + "_sens").value = 0; document.getElementById(p.id + "_sens_lbl").textContent = "Neutral (0)";
-        document.getElementById(p.id + "_comf").value = 2; document.getElementById(p.id + "_comf_lbl").textContent = "Comfortable (+2)";
-        document.getElementById(p.id + "_act").value  = 0; document.getElementById(p.id + "_act_lbl").textContent  = "No change (0)";
+      ["initial", ...bodyParts.map(p => p.id), "overall"].forEach(id => {
+        const vals = prefill && lastValues[id] ? lastValues[id] : defaults[id];
+        document.getElementById(id + "_sens").value = vals.sens; updateLabel(id + "_sens", sensText);
+        document.getElementById(id + "_comf").value = vals.comf; updateLabel(id + "_comf", comfText);
+        document.getElementById(id + "_act").value  = vals.act;  updateLabel(id + "_act",  actText);
       });
 
-      // Reset overall
-      document.getElementById("overall_sens").value = 0; document.getElementById("overall_sens_lbl").textContent = "Neutral (0)";
-      document.getElementById("overall_comf").value = 2; document.getElementById("overall_comf_lbl").textContent = "Comfortable (+2)";
-      document.getElementById("overall_act").value  = 0; document.getElementById("overall_act_lbl").textContent  = "No change (0)";
-
-      // Hide new response button and toast, scroll to top
-      document.getElementById("newResponseBtn").style.display = "none";
+      document.getElementById("post-submit-options").style.display = "none";
+      document.getElementById("prefill-checkbox").checked = false;
       document.getElementById("toast").className = "toast";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -549,23 +549,30 @@
         toast.textContent = "Submitted! Press 'New response' to fill again with the same session context.";
         btn.textContent   = "Submit";
 
-        // Show new response button
-        document.getElementById("newResponseBtn").style.display = "block";
+        // Show post-submit options (checkbox + new response button)
+        document.getElementById("post-submit-options").style.display = "block";
 
-        // Reset only sliders — keep participant, context and ignition_time
-        // Reset initial state to 0
+        // Save current slider values for prefill before resetting
+        lastValues = {};
+        ["initial", ...bodyParts.map(p => p.id), "overall"].forEach(id => {
+          lastValues[id] = {
+            sens: parseFloat(document.getElementById(id + "_sens").value),
+            comf: parseFloat(document.getElementById(id + "_comf").value),
+            act:  parseFloat(document.getElementById(id + "_act").value)
+          };
+        });
+
+        // Reset sliders to defaults
         document.getElementById("initial_sens").value = 0; document.getElementById("initial_sens_lbl").textContent = "Neutral (0)";
         document.getElementById("initial_comf").value = 0; document.getElementById("initial_comf_lbl").textContent = "- (0)";
         document.getElementById("initial_act").value  = 0; document.getElementById("initial_act_lbl").textContent  = "No change (0)";
 
-        // Reset body parts — comfort back to +2
         bodyParts.forEach(p => {
           document.getElementById(p.id + "_sens").value = 0; document.getElementById(p.id + "_sens_lbl").textContent = "Neutral (0)";
           document.getElementById(p.id + "_comf").value = 2; document.getElementById(p.id + "_comf_lbl").textContent = "Comfortable (+2)";
           document.getElementById(p.id + "_act").value  = 0; document.getElementById(p.id + "_act_lbl").textContent  = "No change (0)";
         });
 
-        // Reset overall
         document.getElementById("overall_sens").value = 0; document.getElementById("overall_sens_lbl").textContent = "Neutral (0)";
         document.getElementById("overall_comf").value = 2; document.getElementById("overall_comf_lbl").textContent = "Comfortable (+2)";
         document.getElementById("overall_act").value  = 0; document.getElementById("overall_act_lbl").textContent  = "No change (0)";
