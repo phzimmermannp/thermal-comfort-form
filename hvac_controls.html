@@ -188,17 +188,17 @@
           <div class="dir-label" id="dir-driver-label">—</div>
         </div>
         <div class="vent-zone">
-          <div class="vent-zone-label">Passenger vent</div>
+          <div class="vent-zone-label">Co-driver vent</div>
           <div class="dir-compass" id="compass-passenger"></div>
           <div class="dir-label" id="dir-passenger-label">—</div>
         </div>
         <div class="vent-zone">
-          <div class="vent-zone-label">Rear left vent</div>
+          <div class="vent-zone-label">Driver dashboard vent</div>
           <div class="dir-compass" id="compass-rear-left"></div>
           <div class="dir-label" id="dir-rear-left-label">—</div>
         </div>
         <div class="vent-zone">
-          <div class="vent-zone-label">Rear right vent</div>
+          <div class="vent-zone-label">Co-driver dashboard vent</div>
           <div class="dir-compass" id="compass-rear-right"></div>
           <div class="dir-label" id="dir-rear-right-label">—</div>
         </div>
@@ -260,12 +260,10 @@
     <div class="control-card">
       <div class="card-header"><span class="card-title">Steering wheel</span><span class="section-tag tag-heat">heating</span></div>
       <div class="toggle-row" style="border-bottom:none;padding-bottom:0;">
-        <span class="toggle-label">Level</span>
+        <span class="toggle-label">Status</span>
         <div class="level-pills">
           <div class="level-pill selected" data-group="sw-heat" data-val="off" onclick="selectPill(this)">Off</div>
-          <div class="level-pill warm" data-group="sw-heat" data-val="1" onclick="selectPill(this)">🔥 1</div>
-          <div class="level-pill warm" data-group="sw-heat" data-val="2" onclick="selectPill(this)">🔥 2</div>
-          <div class="level-pill warm" data-group="sw-heat" data-val="3" onclick="selectPill(this)">🔥 3</div>
+          <div class="level-pill warm" data-group="sw-heat" data-val="on" onclick="selectPill(this)">🔥 On</div>
         </div>
       </div>
     </div>
@@ -335,9 +333,9 @@
       <div class="card-header" style="margin-bottom:0.5rem;"><span class="card-title">Current log snapshot</span></div>
       <div class="summary-grid">
         <div class="summary-item"><div class="s-label">Driver vent</div><div class="s-val" id="sum-driver-vent">—</div></div>
-        <div class="summary-item"><div class="s-label">Passenger vent</div><div class="s-val" id="sum-passenger-vent">—</div></div>
-        <div class="summary-item"><div class="s-label">Rear left vent</div><div class="s-val" id="sum-rear-left">—</div></div>
-        <div class="summary-item"><div class="s-label">Rear right vent</div><div class="s-val" id="sum-rear-right">—</div></div>
+        <div class="summary-item"><div class="s-label">Co-driver vent</div><div class="s-val" id="sum-passenger-vent">—</div></div>
+        <div class="summary-item"><div class="s-label">Driver dashboard vent</div><div class="s-val" id="sum-rear-left">—</div></div>
+        <div class="summary-item"><div class="s-label">Co-driver dashboard vent</div><div class="s-val" id="sum-rear-right">—</div></div>
         <div class="summary-item"><div class="s-label">Airflow source</div><div class="s-val" id="sum-sources">—</div></div>
         <div class="summary-item"><div class="s-label">Fan intensity</div><div class="s-val" id="sum-intensity">0 — Off</div></div>
         <div class="summary-item"><div class="s-label">Steering wheel heat</div><div class="s-val" id="sum-sw">Off</div></div>
@@ -347,6 +345,10 @@
       </div>
     </div>
 
+    <label style="display:flex;align-items:center;gap:8px;margin-top:1.5rem;font-size:13px;color:var(--text-secondary);font-family:'IBM Plex Mono',monospace;cursor:pointer;">
+      <input type="checkbox" id="prefill-checkbox" style="width:15px;height:15px;cursor:pointer;" />
+      Pre-fill next log with current values
+    </label>
     <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
     <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()" style="display:none;">New log — same session</button>
     <div class="toast" id="toast"></div>
@@ -552,6 +554,7 @@
       btn.disabled = true; btn.textContent = "Sending…"; toast.className = "toast";
       try {
         await fetch(SHEET_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ type: "hvac_log", rows:[payload] }) });
+        lastLog = payload;
         toast.className = "toast success";
         toast.textContent = "HVAC log submitted! Press 'New log' to record another snapshot.";
         document.getElementById("newResponseBtn").style.display = "block";
@@ -559,13 +562,13 @@
         toast.className = "toast error";
         toast.textContent = "Error sending data. Check the Apps Script URL.";
       }
-      btn.textContent = "Submit HVAC log"; btn.disabled = false;
+      btn.textContent = "Submit"; btn.disabled = false;
     }
 
     // ── Reset ─────────────────────────────────────────────────
-    function newResponse() {
-      document.getElementById("toast").className = "toast";
-      document.getElementById("newResponseBtn").style.display = "none";
+    let lastLog = null;
+
+    function resetAll() {
       ventIds.forEach(id => {
         ventDirs[id] = null;
         document.getElementById("compass-" + id).querySelectorAll(".dir-btn").forEach(b => b.classList.remove("selected"));
@@ -589,6 +592,73 @@
           if(i===0) p.classList.add("selected"); else p.classList.remove("selected");
         });
       });
+      document.getElementById("temp-set").value = 22;
+    }
+
+    function newResponse() {
+      const prefill = document.getElementById("prefill-checkbox").checked;
+      document.getElementById("toast").className = "toast";
+      document.getElementById("newResponseBtn").style.display = "none";
+      document.getElementById("prefill-checkbox").checked = false;
+
+      if (prefill && lastLog) {
+        // Restore vent directions
+        ventIds.forEach(id => {
+          const key = "vent_" + id.replace("-","_");
+          const val = lastLog[key];
+          ventDirs[id] = (val === "" || val === undefined) ? null : val;
+          const container = document.getElementById("compass-" + id);
+          container.querySelectorAll(".dir-btn").forEach(b => b.classList.remove("selected"));
+          dirMap.forEach((d, idx) => {
+            if (d.val === val) container.querySelectorAll(".dir-btn")[idx].classList.add("selected");
+          });
+          document.getElementById("dir-" + id + "-label").textContent =
+            val === null || val === "" || val === undefined ? "—" : val + "°";
+        });
+        // Restore sources
+        activeSources.clear();
+        document.querySelectorAll(".source-option").forEach(el => el.classList.remove("selected"));
+        if (lastLog.airflow_sources) {
+          lastLog.airflow_sources.split("|").filter(Boolean).forEach(src => {
+            activeSources.add(src);
+            const id = "src-" + src.replace(/_/g,"-");
+            const el = document.getElementById(id);
+            if (el) el.classList.add("selected");
+          });
+        }
+        // Restore intensity
+        document.getElementById("intensity-slider").value = lastLog.fan_intensity || 0;
+        updateIntensity();
+        // Restore steering wheel
+        document.querySelectorAll(".level-pill[data-group='sw-heat']").forEach(p => {
+          p.classList.remove("selected");
+          if (p.dataset.val === lastLog.sw_heat_level) p.classList.add("selected");
+        });
+        // Restore seat climate
+        ["driver","codriver"].forEach(role => {
+          const val = lastLog[role + "_seat_climate"] || "off";
+          seatState[role] = val;
+          const container = document.getElementById(role + "-seat-pills");
+          container.querySelectorAll(".seat-pill").forEach(p => {
+            p.classList.remove("sel-heat","sel-cool","sel-off");
+            if (p.dataset.val === val)
+              p.classList.add(val.startsWith("heat") ? "sel-heat" : val.startsWith("cool") ? "sel-cool" : "sel-off");
+          });
+        });
+        // Restore A/C
+        [["ac-compressor", lastLog.ac_compressor],
+         ["recirculation",  lastLog.recirculation],
+         ["auto-mode",      lastLog.auto_mode]].forEach(([g, v]) => {
+          document.querySelectorAll(".level-pill[data-group='" + g + "']").forEach(p => {
+            p.classList.remove("selected");
+            if (p.dataset.val === v) p.classList.add("selected");
+          });
+        });
+        document.getElementById("temp-set").value = lastLog.temp_set || 22;
+      } else {
+        resetAll();
+      }
+
       updateSummary();
       window.scrollTo({top:0, behavior:"smooth"});
     }
