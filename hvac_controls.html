@@ -459,26 +459,39 @@
 
     // ── Session ───────────────────────────────────────────────
     let ignitionTime = null, elapsedTimer = null;
-    function startSession() {
-      const offset = parseInt(document.getElementById("offset-sec").value) || 0;
-      ignitionTime = new Date(Date.now() - offset * 1000);
+
+    function applySession(isoString) {
+      ignitionTime = new Date(isoString);
       const banner = document.getElementById("session-banner");
       const btn    = document.getElementById("start-btn");
       banner.classList.add("active");
       btn.classList.add("started"); btn.textContent = "Restart";
       const fmt = ignitionTime.toLocaleTimeString("en-GB", {hour:"2-digit",minute:"2-digit",second:"2-digit"});
-      document.getElementById("session-time-display").textContent =
-        "Started at " + fmt + (offset ? " (offset: " + (offset > 0 ? "+" : "") + offset + "s)" : "");
       document.getElementById("elapsed-badge").style.display = "inline-block";
+      function tick() {
+        const s = Math.floor((Date.now() - ignitionTime.getTime()) / 1000);
+        document.getElementById("session-time-display").textContent =
+          "Started at " + fmt + " — " + Math.floor(s/60) + "m " + String(s%60).padStart(2,"0") + "s elapsed";
+        document.getElementById("elapsed-badge").textContent =
+          Math.floor(s/60) + "m " + String(s%60).padStart(2,"0") + "s elapsed";
+      }
       if (elapsedTimer) clearInterval(elapsedTimer);
-      elapsedTimer = setInterval(updateElapsed, 1000);
-      updateElapsed();
+      elapsedTimer = setInterval(tick, 1000);
+      tick();
     }
-    function updateElapsed() {
-      const s = Math.floor((Date.now() - ignitionTime.getTime()) / 1000);
-      document.getElementById("elapsed-badge").textContent =
-        Math.floor(s/60) + "m " + String(s%60).padStart(2,"0") + "s elapsed";
+
+    function startSession() {
+      const offset = parseInt(document.getElementById("offset-sec").value) || 0;
+      const iso    = new Date(Date.now() - offset * 1000).toISOString();
+      localStorage.setItem("hvac_ignition_time", iso);
+      applySession(iso);
     }
+
+    // Restore session if already started on the other page
+    (function() {
+      const stored = localStorage.getItem("hvac_ignition_time");
+      if (stored) applySession(stored);
+    })();
 
     // ── Summary ───────────────────────────────────────────────
     function seatLabel(val) {
