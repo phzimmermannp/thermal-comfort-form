@@ -347,7 +347,7 @@
       </div>
     </div>
 
-    <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit</button>
+    <button class="btn-submit" id="submitBtn" onclick="submitToSheets()">Submit HVAC log</button>
     <button class="btn-new-response" id="newResponseBtn" onclick="newResponse()" style="display:none;">New log — same session</button>
     <div class="toast" id="toast"></div>
   </div>
@@ -544,7 +544,7 @@
       const toast = document.getElementById("toast");
       btn.disabled = true; btn.textContent = "Sending…"; toast.className = "toast";
       try {
-        await fetch(SHEET_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ rows:[payload] }) });
+        await fetch(SHEET_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ type: "hvac_log", rows:[payload] }) });
         toast.className = "toast success";
         toast.textContent = "HVAC log submitted! Press 'New log' to record another snapshot.";
         document.getElementById("newResponseBtn").style.display = "block";
