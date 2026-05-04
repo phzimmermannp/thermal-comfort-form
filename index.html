@@ -174,11 +174,11 @@
     <p>Rate each body region across three dimensions: thermal sensation, thermal comfort, and wanted action. Scale: −3 to +3 (ASHRAE 7-point). Decimal values (e.g. 0.5, 1.5) are supported.</p>
   </div>
 
+  
   <div class="tab-bar">
     <a href="index.html" class="tab-link active">Thermal Comfort Survey</a>
     <a href="hvac_controls.html" class="tab-link">HVAC Controls Log</a>
   </div>
-
   <div class="scale-legend">
     <h3>Scale reference</h3>
     <div class="legend-grid">
@@ -381,23 +381,38 @@
 
     let ignitionTime = null;
     let lastValues   = {};
+    let elapsedTimer = null;
 
-    function startSession() {
-      const offset  = parseInt(document.getElementById("offset-sec").value) || 0;
-      const now     = new Date();
-      ignitionTime  = new Date(now.getTime() - offset * 1000);
-
+    function applySession(isoString) {
+      ignitionTime = new Date(isoString);
       const banner  = document.getElementById("session-banner");
       const display = document.getElementById("session-time-display");
       const btn     = document.getElementById("start-btn");
-
       banner.classList.add("active");
       btn.classList.add("started");
       btn.textContent = "Restart";
-
       const fmt = ignitionTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      display.textContent = "Started at " + fmt + (offset !== 0 ? " (offset: " + (offset > 0 ? "+" : "") + offset + "s)" : "");
+      function tick() {
+        const s = Math.floor((Date.now() - ignitionTime.getTime()) / 1000);
+        display.textContent = "Started at " + fmt + " ? " + Math.floor(s/60) + "m " + String(s%60).padStart(2,"0") + "s elapsed";
+      }
+      if (elapsedTimer) clearInterval(elapsedTimer);
+      elapsedTimer = setInterval(tick, 1000);
+      tick();
     }
+
+    function startSession() {
+      const offset = parseInt(document.getElementById("offset-sec").value) || 0;
+      const iso    = new Date(Date.now() - offset * 1000).toISOString();
+      localStorage.setItem("hvac_ignition_time", iso);
+      applySession(iso);
+    }
+
+    // Restore session if already started on the other page
+    (function() {
+      const stored = localStorage.getItem("hvac_ignition_time");
+      if (stored) applySession(stored);
+    })();
 
     function newResponse() {
       const prefill = document.getElementById("prefill-checkbox").checked;
