@@ -357,15 +357,15 @@
 
     // ── Compass ──────────────────────────────────────────────
     const dirMap = [
-      { val:"NW", arrow:"↖", label:"Top-left"    },
-      { val:"N",  arrow:"↑", label:"Up"           },
-      { val:"NE", arrow:"↗", label:"Top-right"   },
-      { val:"W",  arrow:"←", label:"Left"         },
-      { val:"C",  arrow:"●", label:"Center / straight", center:true },
-      { val:"E",  arrow:"→", label:"Right"        },
-      { val:"SW", arrow:"↙", label:"Bottom-left"  },
-      { val:"S",  arrow:"↓", label:"Down"         },
-      { val:"SE", arrow:"↘", label:"Bottom-right" },
+      { val:315, arrow:"↖", label:"315°" },
+      { val:0,   arrow:"↑", label:"0°"   },
+      { val:45,  arrow:"↗", label:"45°"  },
+      { val:270, arrow:"←", label:"270°" },
+      { val:null,arrow:"●", label:"Center", center:true },
+      { val:90,  arrow:"→", label:"90°"  },
+      { val:225, arrow:"↙", label:"225°" },
+      { val:180, arrow:"↓", label:"180°" },
+      { val:135, arrow:"↘", label:"135°" },
     ];
     const ventIds = ["driver","passenger","rear-left","rear-right"];
     const ventDirs = {};
@@ -375,8 +375,14 @@
       dirMap.forEach(d => {
         const btn = document.createElement("div");
         btn.className = "dir-btn" + (d.center ? " center-dot" : "");
-        btn.textContent = d.arrow;
         btn.title = d.label;
+        if (d.center) {
+          btn.textContent = "●";
+        } else {
+          btn.innerHTML = '<span style="font-size:13px;line-height:1;">' + d.arrow + '</span><span style="font-size:8px;font-family:\'IBM Plex Mono\',monospace;line-height:1;color:inherit;opacity:0.75;">' + d.val + '°</span>';
+          btn.style.flexDirection = "column";
+          btn.style.gap = "1px";
+        }
         btn.addEventListener("click", () => selectDir(ventId, d.val, btn, d.label));
         container.appendChild(btn);
       });
@@ -501,10 +507,11 @@
       return val;
     }
     function updateSummary() {
-      document.getElementById("sum-driver-vent").textContent    = ventDirs["driver"]     || "—";
-      document.getElementById("sum-passenger-vent").textContent = ventDirs["passenger"]  || "—";
-      document.getElementById("sum-rear-left").textContent      = ventDirs["rear-left"]  || "—";
-      document.getElementById("sum-rear-right").textContent     = ventDirs["rear-right"] || "—";
+      function ventLabel(v) { if (v === null) return "Center"; if (v === undefined || v === "") return "—"; return v + "°"; }
+      document.getElementById("sum-driver-vent").textContent    = ventLabel(ventDirs["driver"]);
+      document.getElementById("sum-passenger-vent").textContent = ventLabel(ventDirs["passenger"]);
+      document.getElementById("sum-rear-left").textContent      = ventLabel(ventDirs["rear-left"]);
+      document.getElementById("sum-rear-right").textContent     = ventLabel(ventDirs["rear-right"]);
       document.getElementById("sum-sources").textContent        = activeSources.size ? [...activeSources].join(", ") : "—";
       const iv = parseInt(document.getElementById("intensity-slider").value);
       document.getElementById("sum-intensity").textContent      = iv + " — " + intensityLabels[iv];
